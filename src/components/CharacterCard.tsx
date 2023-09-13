@@ -12,7 +12,7 @@ export default function CharCard({character}: CharCardProps) {
 		<Link href={`/character/${character.id}`} key={character.id} prefetch={false}>
 			<Image loader={() => character.image} src={character.image} unoptimized width={300} height={300} alt={character.name} />
 			<span>{character.name}</span>
-			<div>Hi</div>
+			<div></div>
 		</Link>
 	);
 }

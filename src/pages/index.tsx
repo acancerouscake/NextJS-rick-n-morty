@@ -25,20 +25,18 @@ interface Props {
 export const API_URL = 'https://rickandmortyapi.com/api/character';
 
 export default function Home(props: Props) {
-	const {info, results = []} = props.response;
-
-	console.log(results, info);
+	const {info, results: defaultResults = []} = props.response;
+	const [results, updateResults] = useState(defaultResults);
 	const [characters, setCharacters] = useState<Character[]>(results);
-	const [currentInfo, setCurrentInfo] = useState({
-		count: 0,
-		next: '',
-		pages: 0,
-		prev: null,
-	} as CurrentInfo);
+	const [page, updatePage] = useState({
+		...info,
+		current: API_URL,
+	});
+
 	const [filteredBy, setFilteredBy] = useState<string>('');
 	const [searchText, setSearchText] = useState('');
 	const [searchFormText, setSearchFormText] = useState('');
-	const {current} = currentInfo;
+	const {current} = page;
 	// const currentPageNumber = current.includes('page=') ? Number(new URL(current).searchParams.get('page')) : 1;
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -51,18 +49,30 @@ export default function Home(props: Props) {
 	};
 
 	// // Functions
-	// const fetchCharacters = async (page: number, search: string) => {
-	// 	const response = await fetch(`https://rickandmortyapi.com/api/character/?page=${page}&search=${search}`);
-	// 	const data = (await response.json()) as ApiData;
-	// 	setCharacters(data.results);
-	// 	// setCurrentInfo({data.info, current});
-	// };
 
-	// useEffect(() => {
-	// 	fetchCharacters(currentPageNumber, searchText).catch((error) => {
-	// 		console.log('error :>> ', error);
-	// 	});
-	// }, [currentPageNumber, searchText]);
+	useEffect(() => {
+		if (current === API_URL) return;
+		async function request() {
+			const res = await fetch(current);
+			const nextData = await res.json();
+
+			updatePage({
+				current,
+				...nextData.info,
+			});
+
+			if (!nextData.info?.prev) {
+				updateResults(nextData.results);
+				return;
+			}
+
+			updateResults((prev) => {
+				return [...prev, ...nextData.results];
+			});
+		}
+
+		request();
+	}, [current]);
 
 	return (
 		<>
@@ -86,6 +96,7 @@ export default function Home(props: Props) {
 		</>
 	);
 }
+
 export async function getStaticProps() {
 	try {
 		const response = await fetch(API_URL);
